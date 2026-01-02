@@ -136,10 +136,10 @@ export class ScenarioController {
                 });
             }
 
-            if (!["NOT_STARTED", "IN_PROGRESS", "COMPLETED"].includes(status)) {
+            if (!["NOT_STARTED", "COMPLETED"].includes(status)) {
                 return res.status(400).json({
                     success: false,
-                    message: "Invalid status. Must be NOT_STARTED, IN_PROGRESS, or COMPLETED"
+                    message: "Invalid status. Must be NOT_STARTED or COMPLETED"
                 });
             }
 
