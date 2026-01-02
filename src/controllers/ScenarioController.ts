@@ -32,7 +32,7 @@ export class ScenarioController {
 
             res.json({
                 success: true,
-                score: result.score || 85, // Default score if not provided
+                score: result.score, // Return actual score (can be null, 0, or any number)
                 attempt: result
             });
         } catch (error: any) {

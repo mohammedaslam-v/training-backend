@@ -25,6 +25,9 @@ export class ScenarioAttempt {
     @Column({ name: "session_id", type: "varchar", length: 255, nullable: true })
     session_id!: string | null;
 
+    @Column({ type: "json", nullable: true })
+    evaluation!: Record<string, any> | null;
+
     @CreateDateColumn({ name: "created_at" })
     created_at!: Date;
 
