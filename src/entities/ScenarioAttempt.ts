@@ -14,7 +14,7 @@ export class ScenarioAttempt {
 
     @Column({
         type: "enum",
-        enum: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],
+        enum: ["NOT_STARTED", "COMPLETED"],
         default: "NOT_STARTED"
     })
     status!: string;

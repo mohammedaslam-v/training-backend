@@ -10,7 +10,7 @@ export interface SubmitScenarioDTO {
 
 export interface ScenarioProgress {
     scenarioId: string;
-    status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+    status: "NOT_STARTED" | "COMPLETED";
     score?: number | null;
 }
 
@@ -79,7 +79,7 @@ export class ScenarioService {
 
         return {
             scenarioId: attempt.scenario_id,
-            status: attempt.status as "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED",
+            status: attempt.status as "NOT_STARTED" | "COMPLETED",
             score: attempt.score
         };
     }
@@ -87,7 +87,7 @@ export class ScenarioService {
     async updateScenarioStatus(
         teacherId: number,
         scenarioId: string,
-        status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+        status: "NOT_STARTED" | "COMPLETED"
     ): Promise<ScenarioProgress> {
         const attempt = await this.scenarioRepository.createOrUpdateAttempt({
             teacher_id: teacherId,
@@ -97,7 +97,7 @@ export class ScenarioService {
 
         return {
             scenarioId: attempt.scenario_id,
-            status: attempt.status as "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED",
+            status: attempt.status as "NOT_STARTED" | "COMPLETED",
             score: attempt.score
         };
     }
@@ -107,7 +107,7 @@ export class ScenarioService {
         
         return attempts.map(attempt => ({
             scenarioId: attempt.scenario_id,
-            status: attempt.status as "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED",
+            status: attempt.status as "NOT_STARTED" | "COMPLETED",
             score: attempt.score
         }));
     }
