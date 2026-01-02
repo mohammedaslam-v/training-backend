@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes";
 import scenarioRoutes from "./routes/scenario.routes";
+import teacherRoutes from "./routes/teacher.routes";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/scenarios", scenarioRoutes);
+app.use("/api/teachers", teacherRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
