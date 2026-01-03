@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from "typeorm";
 
 @Entity("teacher_aiscenario_attempts")
-@Index(["teacher_id", "scenario_id"], { unique: true })
+@Index(["teacher_id", "scenario_id", "attempt_number"], { unique: true })
 export class ScenarioAttempt {
     @PrimaryGeneratedColumn()
     id!: number;
@@ -11,6 +11,9 @@ export class ScenarioAttempt {
 
     @Column({ name: "scenario_id", type: "varchar", length: 50 })
     scenario_id!: string;
+
+    @Column({ name: "attempt_number", type: "int", default: 1 })
+    attempt_number!: number;
 
     @Column({
         type: "enum",
