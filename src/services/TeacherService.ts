@@ -21,6 +21,7 @@ export interface TeacherResponse {
     scenarioAttempts: {
         id: number;
         scenarioId: string;
+        attemptNumber: number;
         status: string;
         score: number | null;
         session_id: string | null;
@@ -44,6 +45,7 @@ export class TeacherService {
             scenarioAttempts: teacher.scenarioAttempts.map(attempt => ({
                 id: attempt.id,
                 scenarioId: attempt.scenario_id,
+                attemptNumber: attempt.attempt_number,
                 status: attempt.status,
                 score: attempt.score,
                 session_id: attempt.session_id,
