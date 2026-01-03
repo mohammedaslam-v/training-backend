@@ -1,6 +1,7 @@
 import { Response } from "express";
-import { ScenarioService } from "../services/ScenarioService";
+import { ScenarioService, ScenarioProgress } from "../services/ScenarioService";
 import { AuthRequest } from "../middlewares/auth.middleware";
+import { SCENARIO_CONFIG } from "../config/scenarioConfig";
 
 export class ScenarioController {
     constructor(private scenarioService: ScenarioService) {}
@@ -21,6 +22,16 @@ export class ScenarioController {
                 return res.status(400).json({
                     success: false,
                     message: "sessionId and scenarioId are required"
+                });
+            }
+
+            // Check if user can access this scenario
+            // TypeScript workaround: method exists but language server cache may not recognize it
+            const accessCheck = await (this.scenarioService as any).canAccessScenario(teacherId, scenarioId);
+            if (!accessCheck.canAccess) {
+                return res.status(403).json({
+                    success: false,
+                    message: accessCheck.reason || "Cannot access this scenario yet"
                 });
             }
 
@@ -55,51 +66,49 @@ export class ScenarioController {
             }
 
             // Get teacher's progress
-            const progress = await this.scenarioService.getTeacherScenarios(teacherId);
+            const progress: ScenarioProgress[] = await this.scenarioService.getTeacherScenarios(teacherId);
 
-            // Define all available scenarios
-            const allScenarios = [
-                {
-                    id: "1",
-                    title: "PTM Assessment: Handling Parent Concerns",
-                    description: "Navigate a challenging Parent-Teacher Meeting where a parent is concerned about their child's progress. Practice active listening and evidence-based feedback.",
-                    difficulty: "Intermediate",
-                    toughTongueId: "693877e7b8892d3f7b91eb31",
-                    customEmbedUrl: "https://bambinos.app.toughtongueai.com/embed/693877e7b8892d3f7b91eb31?skipPrecheck=true"
-                },
-                {
-                    id: "2",
-                    title: "PTM Coach: Framework Mastery",
-                    description: "Master the structural framework for conducting effective PTMs. Focus on the \"Sandwich Method\" of feedback and setting actionable goals.",
-                    difficulty: "Advanced",
-                    toughTongueId: "6939d23e07d90d92fea80199",
-                    customEmbedUrl: "https://bambinos.app.toughtongueai.com/embed/6939d23e07d90d92fea80199?skipPrecheck=true"
-                },
-                {
-                    id: "3",
-                    title: "Renewal Roleplay: Hesitant Parent (English Communication)",
-                    description: "Roleplay a renewal conversation with a parent hesitant due to perceived lack of improvement in English communication skills. Address objections convincingly.",
-                    difficulty: "Advanced",
-                    toughTongueId: "693a7c1507d90d92fea80744",
-                    customEmbedUrl: "https://bambinos.app.toughtongueai.com/embed/693a7c1507d90d92fea80744?skipPrecheck=true"
-                },
-                {
-                    id: "4",
-                    title: "Coach: The Perfect Renewal Call",
-                    description: "Learn the best practices for a renewal call. Focus on value proposition, celebrating student wins, and closing the renewal effectively.",
-                    difficulty: "Intermediate",
-                    toughTongueId: "6942c17a25f8fcc9bc250d03",
-                    customEmbedUrl: "https://bambinos.app.toughtongueai.com/embed/6942c17a25f8fcc9bc250d03?skipPrecheck=true"
-                }
-            ];
+            // Use scenario config
+            const allScenarios = SCENARIO_CONFIG;
 
             // Merge scenarios with progress
             const scenariosWithProgress = allScenarios.map(scenario => {
-                const progressData = progress.find(p => p.scenarioId === scenario.id);
+                const progressData = progress.find((p: ScenarioProgress) => p.scenarioId === scenario.id);
+                // TypeScript workaround: properties exist but language server cache may not recognize them
+                const progressDataTyped = progressData as ScenarioProgress & { 
+                    completedAttempts: number; 
+                    requiredAttempts: number; 
+                    isLocked?: boolean;
+                };
+                const completedAttempts = progressDataTyped ? progressDataTyped.completedAttempts : 0;
+                const requiredAttempts = progressDataTyped ? progressDataTyped.requiredAttempts : scenario.requiredAttempts;
+                
+                // Use the isLocked value from service (which implements the correct locking logic)
+                // If no progress data exists, determine lock state based on scenario order
+                let isLocked = false;
+                if (progressDataTyped) {
+                    // Use the isLocked value from service
+                    isLocked = progressDataTyped.isLocked ?? false;
+                } else {
+                    // If no progress data, first scenario is unlocked, others are locked
+                    isLocked = scenario.id === "1" ? false : true;
+                }
+                
+                const status = progressDataTyped ? progressDataTyped.status : "NOT_STARTED";
+                const score = progressDataTyped ? progressDataTyped.score : null;
+                
                 return {
-                    ...scenario,
-                    status: progressData?.status || "NOT_STARTED",
-                    score: progressData?.score || null
+                    id: scenario.id,
+                    title: scenario.title,
+                    description: scenario.description,
+                    difficulty: scenario.difficulty,
+                    toughTongueId: scenario.toughTongueId,
+                    customEmbedUrl: scenario.customEmbedUrl,
+                    status: status as "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED",
+                    score: score,
+                    completedAttempts: completedAttempts,
+                    requiredAttempts: requiredAttempts,
+                    isLocked: isLocked
                 };
             });
 
@@ -158,6 +167,34 @@ export class ScenarioController {
             res.status(500).json({
                 success: false,
                 message: error.message || "Failed to update scenario status"
+            });
+        }
+    };
+
+    checkAccess = async (req: AuthRequest, res: Response) => {
+        try {
+            const teacherId = req.user?.id;
+            const { scenarioId } = req.params;
+
+            if (!teacherId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized"
+                });
+            }
+
+            // TypeScript workaround: method exists but language server cache may not recognize it
+            const accessCheck = await (this.scenarioService as any).canAccessScenario(teacherId, scenarioId);
+            res.json({
+                success: true,
+                canAccess: accessCheck.canAccess,
+                reason: accessCheck.reason
+            });
+        } catch (error: any) {
+            console.error("Error checking access:", error);
+            res.status(500).json({
+                success: false,
+                message: error.message || "Failed to check access"
             });
         }
     };

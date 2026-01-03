@@ -17,6 +17,7 @@ router.use(authMiddleware);
 // Routes
 router.post("/submit", scenarioController.submitScenario);
 router.get("/", scenarioController.getScenarios);
+router.get("/:scenarioId/access", scenarioController.checkAccess);
 router.put("/:id/status", scenarioController.updateScenarioStatus);
 
 export default router;
